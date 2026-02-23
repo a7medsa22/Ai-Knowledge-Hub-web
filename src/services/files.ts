@@ -45,7 +45,7 @@ export const filesService = {
     formData.append('file', data.file as unknown as Blob);
     if (data.documentId) formData.append('documentId', data.documentId);
 
-    const response = await api.post<File>('/files/upload', formData, {
+    const response = await api.post<File>('/v1/files/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -61,7 +61,7 @@ export const filesService = {
     if (data.tags) formData.append('tags', data.tags.join(','));
     if (data.isPublic !== undefined) formData.append('isPublic', String(data.isPublic));
 
-    const response = await api.post<{ file: File; document: any }>('/files/upload-and-extract', formData, {
+    const response = await api.post<{ file: File; document: any }>('/v1/files/upload-and-extract', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -71,31 +71,31 @@ export const filesService = {
 
   // Get all files
   getAll: async () => {
-    const response = await api.get<File[]>('/files');
+    const response = await api.get<File[]>('/v1/files');
     return response.data;
   },
 
   // Get file statistics
   getStats: async () => {
-    const response = await api.get<FileStats>('/files/stats');
+    const response = await api.get<FileStats>('/v1/files/stats');
     return response.data;
   },
 
   // Get files for specific document
   getByDocument: async (docId: string) => {
-    const response = await api.get<File[]>(`/files/document/${docId}`);
+    const response = await api.get<File[]>(`/v1/files/document/${docId}`);
     return response.data;
   },
 
   // Get file metadata
   getById: async (id: string) => {
-    const response = await api.get<File>(`/files/${id}`);
+    const response = await api.get<File>(`/v1/files/${id}`);
     return response.data;
   },
 
   // Serve/download file
   serve: async (filename: string) => {
-    const response = await api.get<Blob>(`/files/serve/${filename}`, {
+    const response = await api.get<Blob>(`/v1/files/serve/${filename}`, {
       responseType: 'blob',
     });
     return response.data;
@@ -103,7 +103,7 @@ export const filesService = {
 
   // Delete file
   delete: async (id: string) => {
-    const response = await api.delete(`/files/${id}`);
+    const response = await api.delete(`/v1/files/${id}`);
     return response.data;
   },
 

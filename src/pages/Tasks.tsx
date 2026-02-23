@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,35 +7,50 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { TaskList } from "@/components/tasks/TaskList";
 import type { TaskItemFullProps } from "@/components/tasks/TaskItemFull";
-
-const initialTasks: TaskItemFullProps[] = [
-  { id: "1", title: "Review RAG pipeline architecture doc", description: "Check the latest design decisions and provide feedback", priority: "High", dueDate: "Today", completed: false },
-  { id: "2", title: "Write summary of transformer paper", description: "Focus on attention mechanism innovations", priority: "Medium", dueDate: "Today", completed: false },
-  { id: "3", title: "Update prompt templates library", description: "Add new chain-of-thought templates", priority: "Low", dueDate: "Tomorrow", completed: false },
-  { id: "4", title: "Test new embedding model", description: "Benchmark against current production model", priority: "High", dueDate: "Feb 15", completed: false },
-  { id: "5", title: "Organize AI tools bookmarks", description: "Categorize and remove dead links", priority: "Low", dueDate: "Feb 18", completed: false },
-  { id: "6", title: "Prepare dataset for fine-tuning", description: "Clean and format 500 training examples", priority: "Medium", dueDate: "Feb 20", completed: false },
-  { id: "7", title: "Draft API documentation", description: "Document all public endpoints", priority: "High", dueDate: "Feb 22", completed: false },
-];
+import { tasksService, type Task } from "@/services/tasks";
 
 const Tasks = () => {
-  const [loading, setLoading] = useState(true);
-  const [tasks, setTasks] = useState(initialTasks);
   const [filter, setFilter] = useState("all");
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(timer);
-  }, []);
+  const queryClient = useQueryClient();
+
+  const { data: tasks = [], isLoading } = useQuery({
+    queryKey: ["tasks"],
+    queryFn: () => tasksService.getAll(),
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: (task: Task) => {
+      const nextStatus = task.status === "done" ? "todo" : "done";
+      return tasksService.updateStatus(task.id, nextStatus);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  });
 
   const handleToggle = (id: string) => {
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+    toggleMutation.mutate(task);
   };
 
-  const filtered = tasks.filter((t) => {
+  const mappedTasks: TaskItemFullProps[] = tasks.map((task) => ({
+    id: task.id,
+    title: task.title,
+    description: task.description ?? "",
+    priority: task.priority === "high" ? "High" : task.priority === "medium" ? "Medium" : "Low",
+    dueDate: task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No date",
+    completed: task.status === "done",
+  }));
+
+  const today = new Date().toDateString();
+
+  const filtered = mappedTasks.filter((t) => {
+    const dueDateString = t.dueDate && t.dueDate !== "No date" ? new Date(t.dueDate).toDateString() : "";
     if (filter === "completed") return t.completed;
-    if (filter === "today") return t.dueDate === "Today";
-    if (filter === "upcoming") return !t.completed && t.dueDate !== "Today";
+    if (filter === "today") return !t.completed && dueDateString === today;
+    if (filter === "upcoming") return !t.completed && dueDateString !== "" && dueDateString !== today;
     return true;
   });
 
@@ -67,7 +83,7 @@ const Tasks = () => {
         </div>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <Card>
           <CardContent className="p-4 space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (

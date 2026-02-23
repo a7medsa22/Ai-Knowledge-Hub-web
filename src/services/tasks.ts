@@ -50,55 +50,55 @@ export interface TaskStats {
 export const tasksService = {
   // Create task
   create: async (data: CreateTaskInput) => {
-    const response = await api.post<Task>('/tasks', data);
+    const response = await api.post<Task>('/v1/tasks', data);
     return response.data;
   },
 
   // Get all tasks with filters
   getAll: async (params?: { status?: TaskStatus; priority?: TaskPriority; tags?: string[] }) => {
-    const response = await api.get<Task[]>('/tasks', { params });
+    const response = await api.get<Task[]>('/v1/tasks', { params });
     return response.data;
   },
 
   // Get task statistics
   getStats: async () => {
-    const response = await api.get<TaskStats>('/tasks/stats');
+    const response = await api.get<TaskStats>('/v1/tasks/stats');
     return response.data;
   },
 
   // Get upcoming tasks
   getUpcoming: async () => {
-    const response = await api.get<Task[]>('/tasks/upcoming');
+    const response = await api.get<Task[]>('/v1/tasks/upcoming');
     return response.data;
   },
 
   // Get overdue tasks
   getOverdue: async () => {
-    const response = await api.get<Task[]>('/tasks/overdue');
+    const response = await api.get<Task[]>('/v1/tasks/overdue');
     return response.data;
   },
 
   // Get specific task
   getById: async (id: string) => {
-    const response = await api.get<Task>(`/tasks/${id}`);
+    const response = await api.get<Task>(`/v1/tasks/${id}`);
     return response.data;
   },
 
   // Update task
   update: async (id: string, data: UpdateTaskInput) => {
-    const response = await api.patch<Task>(`/tasks/${id}`, data);
+    const response = await api.patch<Task>(`/v1/tasks/${id}`, data);
     return response.data;
   },
 
   // Update task status
   updateStatus: async (id: string, status: TaskStatus) => {
-    const response = await api.patch<Task>(`/tasks/${id}/status`, { status });
+    const response = await api.patch<Task>(`/v1/tasks/${id}/status`, { status });
     return response.data;
   },
 
   // Delete task
   delete: async (id: string) => {
-    const response = await api.delete(`/tasks/${id}`);
+    const response = await api.delete(`/v1/tasks/${id}`);
     return response.data;
   },
 };

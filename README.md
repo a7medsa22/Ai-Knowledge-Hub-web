@@ -124,8 +124,8 @@ ai-reserch/
 Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/a7medsa22/<your-repo-name>.git
-cd <your-repo-name>
+git clone https://github.com/a7medsa22/Ai-Knowledge-Hub-web.git
+cd Ai-Knowledge-Hub-web
 
 # Install dependencies
 npm install
@@ -262,8 +262,8 @@ Useful npm scripts:
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
-  }
+    "test:watch": "vitest",
+  },
 }
 ```
 
@@ -304,4 +304,3 @@ Specify the license you intend to use. For example:
 ```text
 TODO: Choose a license and replace this section accordingly.
 ```
-

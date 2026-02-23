@@ -60,47 +60,47 @@ export interface QuickUserStats {
 export const mcpService = {
   // List available tools
   getTools: async () => {
-    const response = await api.get<MCPTool[]>('/mcp/tools');
+    const response = await api.get<MCPTool[]>('/v1/mcp/tools');
     return response.data;
   },
 
   // Health check
   healthCheck: async () => {
-    const response = await api.get<{ healthy: boolean; uptime: string }>('/mcp/health');
+    const response = await api.get<{ healthy: boolean; uptime: string }>('/v1/mcp/health');
     return response.data;
   },
 
   // Execute single tool
   execute: async (data: ExecuteToolInput) => {
-    const response = await api.post<ExecuteToolResponse>('/mcp/execute', data);
+    const response = await api.post<ExecuteToolResponse>('/v1/mcp/execute', data);
     return response.data;
   },
 
   // Execute multiple tools
   executeBatch: async (data: ExecuteBatchInput) => {
-    const response = await api.post<ExecuteToolResponse[]>('/mcp/execute-batch', data);
+    const response = await api.post<ExecuteToolResponse[]>('/v1/mcp/execute-batch', data);
     return response.data;
   },
 
   // Quick actions
   quickSearchDocs: async (data: QuickSearchDocsInput) => {
-    const response = await api.post('/mcp/quick/search-docs', data);
+    const response = await api.post('/v1/mcp/quick/search-docs', data);
     return response.data;
   },
 
   quickAddNote: async (data: QuickAddNoteInput) => {
-    const response = await api.post('/mcp/quick/add-note', data);
+    const response = await api.post('/v1/mcp/quick/add-note', data);
     return response.data;
   },
 
   quickCreateTask: async (data: QuickCreateTaskInput) => {
-    const response = await api.post('/mcp/quick/create-task', data);
+    const response = await api.post('/v1/mcp/quick/create-task', data);
     return response.data;
   },
 
   // User statistics
   quickGetUserStats: async () => {
-    const response = await api.get<QuickUserStats>('/mcp/quick/user-stats');
+    const response = await api.get<QuickUserStats>('/v1/mcp/quick/user-stats');
     return response.data;
   },
 };

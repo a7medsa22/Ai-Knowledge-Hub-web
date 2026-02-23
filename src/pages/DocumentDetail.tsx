@@ -1,61 +1,56 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AiResultCard } from "@/components/ai/AiResultCard";
-
-const mockDocument = {
-  title: "Transformer Architecture Deep Dive",
-  content: `The Transformer architecture, introduced in the seminal paper "Attention Is All You Need" by Vaswani et al. (2017), has fundamentally reshaped natural language processing and beyond.
-
-Unlike recurrent neural networks (RNNs) that process sequences step-by-step, Transformers leverage a mechanism called self-attention to process all positions in a sequence simultaneously. This parallelism enables significantly faster training on modern hardware.
-
-The core components of a Transformer include:
-
-• Multi-Head Attention: Rather than computing a single attention function, the model runs multiple attention operations in parallel ("heads"), each learning different aspects of the relationships between tokens.
-
-• Positional Encoding: Since the architecture has no inherent notion of order, positional information is injected via sinusoidal functions or learned embeddings added to the input representations.
-
-• Feed-Forward Networks: Each layer contains a position-wise feed-forward network applied independently to each position, typically consisting of two linear transformations with a ReLU activation in between.
-
-• Layer Normalization & Residual Connections: These stabilize training and enable deeper architectures by ensuring gradients flow effectively through the network.
-
-The encoder-decoder structure of the original Transformer has since been adapted into encoder-only models (BERT), decoder-only models (GPT), and encoder-decoder models (T5), each suited for different tasks.
-
-The impact of this architecture cannot be overstated — it serves as the foundation for virtually all modern large language models, including GPT-4, Claude, Gemini, and LLaMA.`,
-};
-
-const mockSummaries: Record<string, string> = {
-  summarize: `The Transformer architecture (Vaswani et al., 2017) revolutionized NLP by replacing sequential RNN processing with parallel self-attention.
-
-Key components:
-• Multi-Head Attention for parallel relationship learning
-• Positional Encoding for sequence order
-• Feed-Forward Networks per position
-• Layer Norm & Residual Connections for training stability
-
-Variants: BERT (encoder-only), GPT (decoder-only), T5 (encoder-decoder). Foundation for all modern LLMs.`,
-  question: `Based on the document, Transformers achieve faster training through self-attention, which processes all sequence positions simultaneously instead of the step-by-step approach of RNNs. This parallelism maps efficiently to GPU hardware.`,
-  extract: `Key Points:
-• Self-attention enables parallel sequence processing
-• Multi-head attention learns diverse token relationships
-• Positional encoding compensates for lack of inherent order
-• Three main variants: encoder-only, decoder-only, encoder-decoder
-• Foundation architecture for GPT-4, Claude, Gemini, LLaMA`,
-};
+import { documentsService } from "@/services/documents";
+import { aiService } from "@/services/ai";
 
 const DocumentDetail = () => {
   const { id } = useParams();
   const [activeAction, setActiveAction] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [aiContent, setAiContent] = useState<string | null>(null);
 
-  const handleAction = (action: string) => {
+  const { data: document } = useQuery({
+    queryKey: ["document", id],
+    queryFn: () => documentsService.getById(id ?? ""),
+    enabled: !!id,
+  });
+
+  const handleAction = async (action: string) => {
+    if (!id) return;
+
     setLoading(true);
     setActiveAction(null);
-    setTimeout(() => {
+    setAiContent(null);
+
+    try {
+      let content = "";
+
+      if (action === "summarize") {
+        const response = await aiService.summarize({ docId: id, length: "medium" });
+        content = response.summary;
+      } else if (action === "question") {
+        const response = await aiService.ask({
+          docId: id,
+          question: "What are the key insights from this document?",
+        });
+        content = response.answer;
+      } else if (action === "extract") {
+        const response = await aiService.extractKeyPoints({ docId: id, maxPoints: 5 });
+        content = response.keyPoints.join("\n• ");
+      }
+
       setActiveAction(action);
+      setAiContent(content || "The AI service returned an empty response.");
+    } catch {
+      setActiveAction(action);
+      setAiContent("Sorry, something went wrong while contacting the AI service.");
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   const actionLabels: Record<string, string> = {
@@ -95,9 +90,9 @@ const DocumentDetail = () => {
 
       {/* Content */}
       <article>
-        <h1 className="text-3xl font-bold mb-6">{mockDocument.title}</h1>
+        <h1 className="text-3xl font-bold mb-6">{document?.title ?? "Loading document..."}</h1>
         <div className="text-base leading-[1.6] text-muted-foreground whitespace-pre-line max-w-[720px]">
-          {mockDocument.content}
+          {document?.content ?? ""}
         </div>
       </article>
 
@@ -113,10 +108,10 @@ const DocumentDetail = () => {
         </div>
       )}
 
-      {activeAction && (
+      {activeAction && aiContent && (
         <AiResultCard
           title={actionLabels[activeAction]}
-          content={mockSummaries[activeAction]}
+          content={aiContent}
           visible
         />
       )}

@@ -5,18 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChatMessage, TypingIndicator } from "@/components/ai/ChatMessage";
 import { ChatInput } from "@/components/ai/ChatInput";
 import { cn } from "@/lib/utils";
+import { aiService } from "@/services/ai";
 
 interface Message {
   role: "user" | "ai";
   content: string;
 }
-
-const mockResponses = [
-  "Based on your documents, the Transformer architecture uses self-attention to process all tokens in parallel, which is fundamentally different from the sequential approach of RNNs.",
-  "The key benefits of RAG pipelines include: reduced hallucinations, access to up-to-date information, and the ability to cite sources. Your documents contain detailed implementation guides.",
-  "Looking at your knowledge base, I'd recommend starting with a vector database like Qdrant for its balance of performance and ease of use.",
-  "That's a great question! According to your notes, fine-tuning with LoRA typically requires only 1-5% of the parameters of full fine-tuning while achieving comparable results.",
-];
 
 const promptExamples = [
   "Summarize my notes about transformer architecture",
@@ -38,14 +32,42 @@ const AiTools = () => {
     }
   }, [messages, isTyping]);
 
-  const handleSend = (content: string) => {
-    setMessages((prev) => [...prev, { role: "user", content }]);
+  const handleSend = async (content: string) => {
+    const userMessage: Message = { role: "user", content };
+    setMessages((prev) => [...prev, userMessage]);
     setIsTyping(true);
-    setTimeout(() => {
-      const response = mockResponses[messages.length % mockResponses.length];
-      setMessages((prev) => [...prev, { role: "ai", content: response }]);
+
+    try {
+      let aiText = "";
+
+      if (activeTool === "Summarize") {
+        const response = await aiService.summarize({ text: content, length: "short" });
+        aiText = response.summary;
+      } else if (activeTool === "Q&A") {
+        const response = await aiService.ask({ question: content });
+        aiText = response.answer;
+      } else {
+        const response = await aiService.extractKeyPoints({ text: content, maxPoints: 5 });
+        aiText = response.keyPoints.join("\n• ");
+      }
+
+      const aiMessage: Message = {
+        role: "ai",
+        content: aiText || "The AI service returned an empty response.",
+      };
+
+      setMessages((prev) => [...prev, aiMessage]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "ai",
+          content: "Sorry, I couldn't reach the AI service. Please try again.",
+        },
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 800);
+    }
   };
 
   return (

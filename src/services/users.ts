@@ -32,25 +32,25 @@ export interface User {
 export const usersService = {
   // Get current user profile
   getProfile: async () => {
-    const response = await api.get<UserProfile>('/users/profile');
+    const response = await api.get<UserProfile>('/v1/users/profile');
     return response.data;
   },
 
   // Update profile
   updateProfile: async (data: UpdateProfileInput) => {
-    const response = await api.put<UserProfile>('/users/profile', data);
+    const response = await api.put<UserProfile>('/v1/users/profile', data);
     return response.data;
   },
 
   // Delete account
   deleteAccount: async () => {
-    const response = await api.delete('/users/profile');
+    const response = await api.delete('/v1/users/profile');
     return response.data;
   },
 
   // Get all users (admin only)
   getAllUsers: async () => {
-    const response = await api.get<User[]>('/users');
+    const response = await api.get<User[]>('/v1/users');
     return response.data;
   },
 };

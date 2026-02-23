@@ -52,7 +52,7 @@ export interface DocumentStats {
 export const documentsService = {
   // Create document (text)
   create: async (data: CreateDocumentInput) => {
-    const response = await api.post<Document>('/docs', data);
+    const response = await api.post<Document>('/v1/docs', data);
     return response.data;
   },
 
@@ -64,7 +64,7 @@ export const documentsService = {
     if (data.tags) formData.append('tags', data.tags.join(','));
     if (data.isPublic !== undefined) formData.append('isPublic', String(data.isPublic));
 
-    const response = await api.post<Document>('/docs', formData, {
+    const response = await api.post<Document>('/v1/docs', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -74,43 +74,43 @@ export const documentsService = {
 
   // Get all public documents (searchable)
   getAll: async (params?: { search?: string; tags?: string[]; page?: number; limit?: number }) => {
-    const response = await api.get<Document[]>('/docs', { params });
+    const response = await api.get<Document[]>('/v1/docs', { params });
     return response.data;
   },
 
   // Get user's documents
   getMyDocuments: async () => {
-    const response = await api.get<Document[]>('/docs/my-docs');
+    const response = await api.get<Document[]>('/v1/docs/my-docs');
     return response.data;
   },
 
   // Get all tags
   getTags: async () => {
-    const response = await api.get<string[]>('/docs/tags');
+    const response = await api.get<string[]>('/v1/docs/tags');
     return response.data;
   },
 
   // Get statistics
   getStats: async () => {
-    const response = await api.get<DocumentStats>('/docs/stats');
+    const response = await api.get<DocumentStats>('/v1/docs/status');
     return response.data;
   },
 
   // Get specific document
   getById: async (id: string) => {
-    const response = await api.get<Document>(`/docs/${id}`);
+    const response = await api.get<Document>(`/v1/docs/${id}`);
     return response.data;
   },
 
   // Update document
   update: async (id: string, data: UpdateDocumentInput) => {
-    const response = await api.patch<Document>(`/docs/${id}`, data);
+    const response = await api.patch<Document>(`/v1/docs/${id}`, data);
     return response.data;
   },
 
   // Delete document
   delete: async (id: string) => {
-    const response = await api.delete(`/docs/${id}`);
+    const response = await api.delete(`/v1/docs/${id}`);
     return response.data;
   },
 };

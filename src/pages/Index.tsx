@@ -1,32 +1,40 @@
-import { useState, useEffect } from "react";
 import { File, BookOpen, CheckCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { NotePreview } from "@/components/dashboard/NotePreview";
 import { TaskItem } from "@/components/dashboard/TaskItem";
-
-const mockNotes = [
-  { title: "Transformer Architecture Notes", excerpt: "Key insights about attention mechanisms and their role in modern NLP models.", tag: "AI Research", timestamp: "2h ago" },
-  { title: "GPT-4 Capabilities", excerpt: "Comparing GPT-4's performance across reasoning, coding, and creative tasks.", tag: "LLMs", timestamp: "5h ago" },
-  { title: "RAG Pipeline Design", excerpt: "Steps to build a retrieval-augmented generation pipeline with vector databases.", tag: "Engineering", timestamp: "1d ago" },
-  { title: "Prompt Engineering Tips", excerpt: "Best practices for crafting effective prompts for different use cases.", tag: "Prompts", timestamp: "2d ago" },
-];
-
-const mockTasks = [
-  { title: "Review RAG pipeline architecture doc", priority: "High" as const, dueDate: "Today" },
-  { title: "Write summary of transformer paper", priority: "Medium" as const, dueDate: "Tomorrow" },
-  { title: "Update prompt templates library", priority: "Low" as const, dueDate: "Feb 14" },
-  { title: "Test new embedding model", priority: "High" as const, dueDate: "Feb 15" },
-  { title: "Organize AI tools bookmarks", priority: "Low" as const, dueDate: "Feb 18" },
-];
+import { documentsService } from "@/services/documents";
+import { notesService } from "@/services/notes";
+import { tasksService } from "@/services/tasks";
 
 const Index = () => {
-  const [loading, setLoading] = useState(true);
+  const { data: documentStats, isLoading: docsLoading } = useQuery({
+    queryKey: ["documents", "stats"],
+    queryFn: documentsService.getStats,
+  });
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
+  const { data: noteStats, isLoading: notesStatsLoading } = useQuery({
+    queryKey: ["notes", "stats"],
+    queryFn: notesService.getStats,
+  });
+
+  const { data: taskStats, isLoading: tasksStatsLoading } = useQuery({
+    queryKey: ["tasks", "stats"],
+    queryFn: tasksService.getStats,
+  });
+
+  const { data: recentNotes, isLoading: recentNotesLoading } = useQuery({
+    queryKey: ["notes", "recent", 4],
+    queryFn: () => notesService.getRecent(4),
+  });
+
+  const { data: upcomingTasks, isLoading: upcomingTasksLoading } = useQuery({
+    queryKey: ["tasks", "upcoming"],
+    queryFn: tasksService.getUpcoming,
+  });
+
+  const loading = docsLoading || notesStatsLoading || tasksStatsLoading || recentNotesLoading || upcomingTasksLoading;
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 animate-fade-in">
@@ -35,11 +43,28 @@ const Index = () => {
         <p className="text-muted-foreground mt-1">Welcome back to your AI Knowledge Hub</p>
       </div>
 
-      {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard title="Documents" value={42} borderColor="border-l-4 border-l-indigo-500" icon={File} loading={loading} />
-        <StatCard title="Notes" value={28} borderColor="border-l-4 border-l-emerald-500" icon={BookOpen} loading={loading} />
-        <StatCard title="Tasks" value={12} borderColor="border-l-4 border-l-amber-500" icon={CheckCircle} loading={loading} />
+        <StatCard
+          title="Documents"
+          value={documentStats?.totalDocuments ?? 0}
+          borderColor="border-l-4 border-l-indigo-500"
+          icon={File}
+          loading={loading}
+        />
+        <StatCard
+          title="Notes"
+          value={noteStats?.totalNotes ?? 0}
+          borderColor="border-l-4 border-l-emerald-500"
+          icon={BookOpen}
+          loading={loading}
+        />
+        <StatCard
+          title="Tasks"
+          value={taskStats?.totalTasks ?? 0}
+          borderColor="border-l-4 border-l-amber-500"
+          icon={CheckCircle}
+          loading={loading}
+        />
       </div>
 
       {/* Recent Notes */}
@@ -50,8 +75,15 @@ const Index = () => {
             ? Array.from({ length: 4 }).map((_, i) => (
                 <NotePreview key={i} title="" excerpt="" tag="" timestamp="" loading />
               ))
-            : mockNotes.map((note) => (
-                <NotePreview key={note.title} {...note} />
+            : (recentNotes ?? []).map((note) => (
+                <NotePreview
+                  key={note.id}
+                  title={note.title}
+                  excerpt={note.content}
+                  tag={note.tags?.[0] ?? "Note"}
+                  timestamp={new Date(note.createdAt).toLocaleDateString()}
+                  loading={false}
+                />
               ))}
         </div>
       </section>
@@ -61,8 +93,13 @@ const Index = () => {
         <h2 className="text-2xl font-semibold mb-4">Upcoming Tasks</h2>
         <Card>
           <CardContent className="divide-y divide-border p-2">
-            {mockTasks.map((task) => (
-              <TaskItem key={task.title} {...task} />
+            {(upcomingTasks ?? []).map((task) => (
+              <TaskItem
+                key={task.id}
+                title={task.title}
+                priority={task.priority === "high" ? "High" : task.priority === "medium" ? "Medium" : "Low"}
+                dueDate={task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No date"}
+              />
             ))}
           </CardContent>
         </Card>
