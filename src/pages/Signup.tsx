@@ -28,7 +28,7 @@ const SignupPage = () => {
         title: "Account created",
         description: "Check your email for the verification code before signing in.",
       });
-      navigate("/login");
+      navigate("/verify-email", { state: { email } });
     } catch (err: unknown) {
       const description =
         err instanceof Error && err.message ? err.message : "Something went wrong.";

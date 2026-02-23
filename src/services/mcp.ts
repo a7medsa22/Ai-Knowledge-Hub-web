@@ -1,4 +1,5 @@
 import api from '@/lib/axios';
+import { type BackendResponse } from './auth';
 
 // ==================== Types ====================
 
@@ -60,47 +61,47 @@ export interface QuickUserStats {
 export const mcpService = {
   // List available tools
   getTools: async () => {
-    const response = await api.get<MCPTool[]>('/v1/mcp/tools');
-    return response.data;
+    const response = await api.get<BackendResponse<MCPTool[]>>('/v1/mcp/tools');
+    return response.data.data;
   },
 
   // Health check
   healthCheck: async () => {
-    const response = await api.get<{ healthy: boolean; uptime: string }>('/v1/mcp/health');
-    return response.data;
+    const response = await api.get<BackendResponse<{ healthy: boolean; uptime: string }>>('/v1/mcp/health');
+    return response.data.data;
   },
 
   // Execute single tool
   execute: async (data: ExecuteToolInput) => {
-    const response = await api.post<ExecuteToolResponse>('/v1/mcp/execute', data);
-    return response.data;
+    const response = await api.post<BackendResponse<ExecuteToolResponse>>('/v1/mcp/execute', data);
+    return response.data.data;
   },
 
   // Execute multiple tools
   executeBatch: async (data: ExecuteBatchInput) => {
-    const response = await api.post<ExecuteToolResponse[]>('/v1/mcp/execute-batch', data);
-    return response.data;
+    const response = await api.post<BackendResponse<ExecuteToolResponse[]>>('/v1/mcp/execute-batch', data);
+    return response.data.data;
   },
 
   // Quick actions
   quickSearchDocs: async (data: QuickSearchDocsInput) => {
-    const response = await api.post('/v1/mcp/quick/search-docs', data);
-    return response.data;
+    const response = await api.post<BackendResponse<any>>('/v1/mcp/quick/search-docs', data);
+    return response.data.data;
   },
 
   quickAddNote: async (data: QuickAddNoteInput) => {
-    const response = await api.post('/v1/mcp/quick/add-note', data);
-    return response.data;
+    const response = await api.post<BackendResponse<any>>('/v1/mcp/quick/add-note', data);
+    return response.data.data;
   },
 
   quickCreateTask: async (data: QuickCreateTaskInput) => {
-    const response = await api.post('/v1/mcp/quick/create-task', data);
-    return response.data;
+    const response = await api.post<BackendResponse<any>>('/v1/mcp/quick/create-task', data);
+    return response.data.data;
   },
 
   // User statistics
   quickGetUserStats: async () => {
-    const response = await api.get<QuickUserStats>('/v1/mcp/quick/user-stats');
-    return response.data;
+    const response = await api.get<BackendResponse<QuickUserStats>>('/v1/mcp/quick/user-stats');
+    return response.data.data;
   },
 };

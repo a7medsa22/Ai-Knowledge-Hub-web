@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Bot, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +7,7 @@ import { ChatMessage, TypingIndicator } from "@/components/ai/ChatMessage";
 import { ChatInput } from "@/components/ai/ChatInput";
 import { cn } from "@/lib/utils";
 import { aiService } from "@/services/ai";
+import { documentsService } from "@/services/documents";
 
 interface Message {
   role: "user" | "ai";
@@ -21,10 +23,16 @@ const promptExamples = [
 const tools = ["Summarize", "Q&A", "Extract"];
 
 const AiTools = () => {
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [activeTool, setActiveTool] = useState("Q&A");
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const { data: myDocuments, isLoading: docsLoading } = useQuery({
+    queryKey: ["documents", "my"],
+    queryFn: documentsService.getMyDocuments,
+  });
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -41,13 +49,24 @@ const AiTools = () => {
       let aiText = "";
 
       if (activeTool === "Summarize") {
-        const response = await aiService.summarize({ text: content, length: "short" });
+        const response = await aiService.summarize({ 
+          text: selectedDocId ? undefined : content, 
+          docId: selectedDocId || undefined,
+          length: "short" 
+        });
         aiText = response.summary;
       } else if (activeTool === "Q&A") {
-        const response = await aiService.ask({ question: content });
+        const response = await aiService.ask({ 
+          question: content,
+          docId: selectedDocId || undefined
+        });
         aiText = response.answer;
       } else {
-        const response = await aiService.extractKeyPoints({ text: content, maxPoints: 5 });
+        const response = await aiService.extractKeyPoints({ 
+          text: selectedDocId ? undefined : content, 
+          docId: selectedDocId || undefined,
+          maxPoints: 5 
+        });
         aiText = response.keyPoints.join("\n• ");
       }
 
@@ -130,14 +149,27 @@ const AiTools = () => {
             <CardTitle className="text-base">Attached Documents</CardTitle>
           </CardHeader>
           <CardContent className="flex gap-2 flex-wrap">
-            {["Transformer Architecture", "RAG Pipeline", "Prompt Guide"].map((doc) => (
-              <span
-                key={doc}
-                className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
-              >
-                {doc}
-              </span>
-            ))}
+            {docsLoading && (
+              <span className="text-xs text-muted-foreground">Loading documents…</span>
+            )}
+            {!docsLoading && myDocuments && myDocuments.length === 0 && (
+              <span className="text-xs text-muted-foreground">No documents yet.</span>
+            )}
+            {!docsLoading &&
+              (myDocuments ?? []).slice(0, 8).map((doc) => (
+                <button
+                  key={doc.id}
+                  onClick={() => setSelectedDocId(current => current === doc.id ? null : doc.id)}
+                  className={cn(
+                    "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors border",
+                    selectedDocId === doc.id
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-primary/10 text-primary border-transparent hover:bg-primary/20"
+                  )}
+                >
+                  {doc.title}
+                </button>
+              ))}
           </CardContent>
         </Card>
       </div>

@@ -1,4 +1,5 @@
 import api from '@/lib/axios';
+import { type BackendResponse } from './auth';
 
 // ==================== Types ====================
 
@@ -45,12 +46,12 @@ export const filesService = {
     formData.append('file', data.file as unknown as Blob);
     if (data.documentId) formData.append('documentId', data.documentId);
 
-    const response = await api.post<File>('/v1/files/upload', formData, {
+    const response = await api.post<BackendResponse<File>>('/v1/files/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
-    return response.data;
+    return response.data.data;
   },
 
   // Upload file and create document
@@ -61,36 +62,36 @@ export const filesService = {
     if (data.tags) formData.append('tags', data.tags.join(','));
     if (data.isPublic !== undefined) formData.append('isPublic', String(data.isPublic));
 
-    const response = await api.post<{ file: File; document: any }>('/v1/files/upload-and-extract', formData, {
+    const response = await api.post<BackendResponse<{ file: File; document: any }>>('/v1/files/upload-and-extract', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
-    return response.data;
+    return response.data.data;
   },
 
   // Get all files
   getAll: async () => {
-    const response = await api.get<File[]>('/v1/files');
-    return response.data;
+    const response = await api.get<BackendResponse<File[]>>('/v1/files');
+    return response.data.data;
   },
 
   // Get file statistics
   getStats: async () => {
-    const response = await api.get<FileStats>('/v1/files/stats');
-    return response.data;
+    const response = await api.get<BackendResponse<FileStats>>('/v1/files/stats');
+    return response.data.data;
   },
 
   // Get files for specific document
   getByDocument: async (docId: string) => {
-    const response = await api.get<File[]>(`/v1/files/document/${docId}`);
-    return response.data;
+    const response = await api.get<BackendResponse<File[]>>(`/v1/files/document/${docId}`);
+    return response.data.data;
   },
 
   // Get file metadata
   getById: async (id: string) => {
-    const response = await api.get<File>(`/v1/files/${id}`);
-    return response.data;
+    const response = await api.get<BackendResponse<File>>(`/v1/files/${id}`);
+    return response.data.data;
   },
 
   // Serve/download file
@@ -103,8 +104,8 @@ export const filesService = {
 
   // Delete file
   delete: async (id: string) => {
-    const response = await api.delete(`/v1/files/${id}`);
-    return response.data;
+    const response = await api.delete<BackendResponse<any>>(`/v1/files/${id}`);
+    return response.data.data;
   },
 
   // Download helper function

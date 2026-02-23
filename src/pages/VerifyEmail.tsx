@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/services/auth";
 
 const VerifyEmailPage = () => {
-  const [email, setEmail] = useState("");
+  const location = useLocation();
+  const [email, setEmail] = useState(location.state?.email || "");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);

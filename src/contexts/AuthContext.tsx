@@ -22,15 +22,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     setLoading(true);
     try {
-      const result = await authService.login({ email, password });
-      if (!result.success || !result.data) {
+      const data = await authService.login({ email, password });
+      if (!data) {
         throw new Error("Login failed");
       }
-      const { user: payloadUser, accessToken, refreshToken } = result.data;
+      const { user: payloadUser, accessToken, refreshToken } = data;
       const authUser: User = {
         id: payloadUser.sub,
         name: payloadUser.name,
         email: payloadUser.email,
+        avatar: undefined, // Add placeholder or handle if available
       };
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
@@ -44,11 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signup = useCallback(async (name: string, email: string, password: string) => {
     setLoading(true);
     try {
-      const result = await authService.register({ name, email, password });
-      if (!result.success) {
-        const msg = Array.isArray(result.message) ? result.message.join(", ") : result.message;
-        throw new Error(msg || "Signup failed");
-      }
+      await authService.register({ name, email, password });
     } catch (err: unknown) {
       if (err instanceof Error) {
         throw err;

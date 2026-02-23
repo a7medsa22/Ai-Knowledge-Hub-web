@@ -1,4 +1,5 @@
 import api from '@/lib/axios';
+import { type BackendResponse } from './auth';
 
 // ==================== Types ====================
 
@@ -32,25 +33,25 @@ export interface User {
 export const usersService = {
   // Get current user profile
   getProfile: async () => {
-    const response = await api.get<UserProfile>('/v1/users/profile');
-    return response.data;
+    const response = await api.get<BackendResponse<UserProfile>>('/v1/users/profile');
+    return response.data.data;
   },
 
   // Update profile
   updateProfile: async (data: UpdateProfileInput) => {
-    const response = await api.put<UserProfile>('/v1/users/profile', data);
-    return response.data;
+    const response = await api.put<BackendResponse<UserProfile>>('/v1/users/profile', data);
+    return response.data.data;
   },
 
   // Delete account
   deleteAccount: async () => {
-    const response = await api.delete('/v1/users/profile');
-    return response.data;
+    const response = await api.delete<BackendResponse<any>>('/v1/users/profile');
+    return response.data.data;
   },
 
   // Get all users (admin only)
   getAllUsers: async () => {
-    const response = await api.get<User[]>('/v1/users');
-    return response.data;
+    const response = await api.get<BackendResponse<User[]>>('/v1/users');
+    return response.data.data;
   },
 };

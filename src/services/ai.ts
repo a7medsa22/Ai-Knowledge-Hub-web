@@ -1,4 +1,5 @@
 import api from '@/lib/axios';
+import { type BackendResponse } from './auth';
 
 // ==================== Types ====================
 
@@ -78,49 +79,49 @@ export interface BulkSummarizeResponse {
 export const aiService = {
   // Check AI service availability
   getStatus: async () => {
-    const response = await api.get<AIStatus>('/v1/ai/status');
-    return response.data;
+    const response = await api.get<BackendResponse<AIStatus>>('/v1/ai/status');
+    return response.data.data;
   },
 
   // Summarize text or document
   summarize: async (data: SummarizeInput) => {
-    const response = await api.post<SummarizeResponse>('/v1/ai/summarize', data);
-    return response.data;
+    const response = await api.post<BackendResponse<SummarizeResponse>>('/v1/ai/summarize', data);
+    return response.data.data;
   },
 
   // RAG Question & Answer
   ask: async (data: AskInput) => {
-    const response = await api.post<AskResponse>('/v1/ai/ask', data);
-    return response.data;
+    const response = await api.post<BackendResponse<AskResponse>>('/v1/ai/ask', data);
+    return response.data.data;
   },
 
   // Alias for ask
   qa: async (data: AskInput) => {
-    const response = await api.post<AskResponse>('/v1/ai/ask', data);
-    return response.data;
+    const response = await api.post<BackendResponse<AskResponse>>('/v1/ai/ask', data);
+    return response.data.data;
   },
 
   // Semantic Search
   search: async (data: SearchInput) => {
-    const response = await api.post<SearchResult[]>('/v1/ai/search', data);
-    return response.data;
+    const response = await api.post<BackendResponse<SearchResult[]>>('/v1/ai/search', data);
+    return response.data.data;
   },
 
   // Legacy Q&A (Direct context)
   chat: async (data: { message: string; context?: string }) => {
-    const response = await api.post<{ response: string }>('/v1/ai/chat', data);
-    return response.data;
+    const response = await api.post<BackendResponse<{ response: string }>>('/v1/ai/chat', data);
+    return response.data.data;
   },
 
   // Extract key points
   extractKeyPoints: async (data: ExtractKeyPointsInput) => {
-    const response = await api.post<ExtractKeyPointsResponse>('/v1/ai/extract-key-points', data);
-    return response.data;
+    const response = await api.post<BackendResponse<ExtractKeyPointsResponse>>('/v1/ai/extract-key-points', data);
+    return response.data.data;
   },
 
   // Summarize multiple documents
   bulkSummarize: async (data: BulkSummarizeInput) => {
-    const response = await api.post<BulkSummarizeResponse>('/v1/ai/bulk-summarize', data);
-    return response.data;
+    const response = await api.post<BackendResponse<BulkSummarizeResponse>>('/v1/ai/bulk-summarize', data);
+    return response.data.data;
   },
 };
