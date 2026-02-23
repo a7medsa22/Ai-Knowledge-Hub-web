@@ -1,0 +1,104 @@
+import api from '@/lib/axios';
+
+// ==================== Types ====================
+
+export type TaskPriority = 'high' | 'medium' | 'low';
+export type TaskStatus = 'todo' | 'in-progress' | 'done';
+
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  priority: TaskPriority;
+  status: TaskStatus;
+  dueDate?: string;
+  tags?: string[];
+  documentId?: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTaskInput {
+  title: string;
+  description?: string;
+  priority: TaskPriority;
+  status?: TaskStatus;
+  dueDate?: string;
+  tags?: string[];
+  documentId?: string;
+}
+
+export interface UpdateTaskInput {
+  title?: string;
+  description?: string;
+  priority?: TaskPriority;
+  status?: TaskStatus;
+  dueDate?: string;
+  tags?: string[];
+}
+
+export interface TaskStats {
+  totalTasks: number;
+  completedTasks: number;
+  pendingTasks: number;
+  overdueTasks: number;
+}
+
+// ==================== Tasks Service ====================
+
+export const tasksService = {
+  // Create task
+  create: async (data: CreateTaskInput) => {
+    const response = await api.post<Task>('/tasks', data);
+    return response.data;
+  },
+
+  // Get all tasks with filters
+  getAll: async (params?: { status?: TaskStatus; priority?: TaskPriority; tags?: string[] }) => {
+    const response = await api.get<Task[]>('/tasks', { params });
+    return response.data;
+  },
+
+  // Get task statistics
+  getStats: async () => {
+    const response = await api.get<TaskStats>('/tasks/stats');
+    return response.data;
+  },
+
+  // Get upcoming tasks
+  getUpcoming: async () => {
+    const response = await api.get<Task[]>('/tasks/upcoming');
+    return response.data;
+  },
+
+  // Get overdue tasks
+  getOverdue: async () => {
+    const response = await api.get<Task[]>('/tasks/overdue');
+    return response.data;
+  },
+
+  // Get specific task
+  getById: async (id: string) => {
+    const response = await api.get<Task>(`/tasks/${id}`);
+    return response.data;
+  },
+
+  // Update task
+  update: async (id: string, data: UpdateTaskInput) => {
+    const response = await api.patch<Task>(`/tasks/${id}`, data);
+    return response.data;
+  },
+
+  // Update task status
+  updateStatus: async (id: string, status: TaskStatus) => {
+    const response = await api.patch<Task>(`/tasks/${id}/status`, { status });
+    return response.data;
+  },
+
+  // Delete task
+  delete: async (id: string) => {
+    const response = await api.delete(`/tasks/${id}`);
+    return response.data;
+  },
+};
