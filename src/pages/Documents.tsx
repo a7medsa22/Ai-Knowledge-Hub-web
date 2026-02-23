@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { Plus, Search, Tag, FileText, Upload, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,10 +13,29 @@ import { documentsService } from "@/services/documents";
 import { DocumentCard } from "@/components/documents/DocumentCard";
 
 const Documents = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (searchParams.get("create") === "true") {
+      setIsCreateOpen(true);
+      // Clean up the URL
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("create");
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
   const { toast } = useToast();
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [search]);
   
   // Create state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -36,10 +56,10 @@ const Documents = () => {
   });
 
   const { data: documents, isLoading, error } = useQuery({
-    queryKey: ["documents", { search, selectedTag }],
+    queryKey: ["documents", { search: debouncedSearch, selectedTag }],
     queryFn: () =>
       documentsService.getAll({
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         tags: selectedTag ? [selectedTag] : undefined,
       }),
   });

@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import { authService } from "@/services/auth";
+import { usersService } from "@/services/users";
 import { type User } from "@/services/users";
 
 interface AuthContextType {
@@ -13,11 +14,42 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem("auth_user");
-    return saved ? JSON.parse(saved) : null;
-  });
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const checkSession = useCallback(async () => {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const profile = await usersService.getProfile();
+      if (profile) {
+        const authUser: User = {
+          id: profile.id,
+          name: profile.name,
+          email: profile.email,
+          avatar: profile.avatar,
+        };
+        setUser(authUser);
+        localStorage.setItem("auth_user", JSON.stringify(authUser));
+      }
+    } catch (error) {
+      console.error("Session verification failed:", error);
+      // axios interceptor will handle the 401 and redirect if needed
+      // so we just clear local state here if it fails
+      setUser(null);
+      localStorage.removeItem("auth_user");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
 
   const login = useCallback(async (email: string, password: string) => {
     setLoading(true);

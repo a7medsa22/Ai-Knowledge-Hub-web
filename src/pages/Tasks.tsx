@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { Plus, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,22 +8,78 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { TaskList } from "@/components/tasks/TaskList";
 import type { TaskItemFullProps } from "@/components/tasks/TaskItemFull";
-import { tasksService, type Task } from "@/services/tasks";
+import { tasksService, type Task, type TaskPriority } from "@/services/tasks";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 const Tasks = () => {
   const [filter, setFilter] = useState("all");
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'>("MEDIUM");
+  
+  const todayDate = new Date().toISOString().split('T')[0];
+  const [dueDate, setDueDate] = useState(todayDate);
 
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (searchParams.get("create") === "true") {
+      setIsCreateOpen(true);
+      // Clean up the URL
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("create");
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["tasks"],
     queryFn: () => tasksService.getAll(),
   });
 
+  const createMutation = useMutation({
+    mutationFn: tasksService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      setIsCreateOpen(false);
+      resetForm();
+      toast.success("Task created successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to create task");
+    },
+  });
+
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setPriority("MEDIUM");
+    setDueDate(todayDate);
+  };
+
+  const handleCreateTask = () => {
+    if (!title.trim()) {
+      toast.error("Please enter a title");
+      return;
+    }
+    createMutation.mutate({
+      title,
+      description,
+      priority,
+      dueDate: dueDate || undefined,
+    });
+  };
+
   const toggleMutation = useMutation({
     mutationFn: (task: Task) => {
-      const nextStatus = task.status === "done" ? "todo" : "done";
-      return tasksService.updateStatus(task.id, nextStatus);
+      const nextStatus = task.status === "DONE" ? "TODO" : "DONE";
+      return tasksService.updateStatus(task.id, nextStatus as any);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -39,24 +96,33 @@ const Tasks = () => {
     id: task.id,
     title: task.title,
     description: task.description ?? "",
-    priority: task.priority === "high" ? "High" : task.priority === "medium" ? "Medium" : "Low",
+    priority: task.priority,
     dueDate: task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No date",
-    completed: task.status === "done",
+    completed: task.status === "DONE",
   }));
 
   const today = new Date().toDateString();
 
   const filtered = mappedTasks.filter((t) => {
-    const dueDateString = t.dueDate && t.dueDate !== "No date" ? new Date(t.dueDate).toDateString() : "";
     if (filter === "completed") return t.completed;
-    if (filter === "today") return !t.completed && dueDateString === today;
-    if (filter === "upcoming") return !t.completed && dueDateString !== "" && dueDateString !== today;
+    
+    // For other filters, only show non-completed tasks
+    if (t.completed) return false;
+    
+    const taskDate = t.dueDate !== "No date" ? new Date(t.dueDate).toDateString() : null;
+    
+    if (filter === "today") return taskDate === today;
+    if (filter === "upcoming") return taskDate !== null && taskDate !== today;
     return true;
   });
 
-  const todayTasks = filtered.filter((t) => t.dueDate === "Today");
-  const upcomingTasks = filtered.filter((t) => t.dueDate !== "Today" && !t.completed);
-  const completedTasks = filtered.filter((t) => t.completed);
+  const todayTasks = filtered.filter((t) => 
+    t.dueDate !== "No date" && new Date(t.dueDate).toDateString() === today
+  );
+  const upcomingTasks = filtered.filter((t) => 
+    !t.completed && t.dueDate !== "No date" && new Date(t.dueDate).toDateString() !== today
+  );
+  const completedTasks = mappedTasks.filter((t) => t.completed);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 animate-fade-in">
@@ -77,7 +143,7 @@ const Tasks = () => {
               <SelectItem value="completed">Completed</SelectItem>
             </SelectContent>
           </Select>
-          <Button className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:opacity-90">
+          <Button onClick={() => setIsCreateOpen(true)} className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:opacity-90">
             <Plus className="h-4 w-4 mr-1" /> New Task
           </Button>
         </div>
@@ -105,7 +171,7 @@ const Tasks = () => {
           </div>
           <h2 className="text-2xl font-semibold mb-2">No tasks found</h2>
           <p className="text-muted-foreground mb-6 max-w-sm">Create your first task to stay organized</p>
-          <Button className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:opacity-90">
+          <Button onClick={() => setIsCreateOpen(true)} className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:opacity-90">
             Create Task
           </Button>
         </div>
@@ -118,6 +184,74 @@ const Tasks = () => {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="sm:max-w-[500px] rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">New Task</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="title" className="text-sm font-medium">Title</Label>
+              <Input
+                id="title"
+                placeholder="What needs to be done?"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="rounded-xl bg-muted/50 border-border"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="description" className="text-sm font-medium">Description (Optional)</Label>
+              <Textarea
+                id="description"
+                placeholder="Add some details..."
+                className="min-h-[100px] rounded-xl bg-muted/50 border-border resize-none"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="priority" className="text-sm font-medium">Priority</Label>
+                <Select value={priority} onValueChange={(v: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT') => setPriority(v)}>
+                  <SelectTrigger id="priority" className="rounded-xl bg-muted/50 border-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="LOW">Low</SelectItem>
+                    <SelectItem value="MEDIUM">Medium</SelectItem>
+                    <SelectItem value="HIGH">High</SelectItem>
+                    <SelectItem value="URGENT">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="dueDate" className="text-sm font-medium">Due Date (Optional)</Label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="rounded-xl bg-muted/50 border-border"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsCreateOpen(false)} className="rounded-xl">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreateTask} 
+              disabled={createMutation.isPending}
+              className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:opacity-90"
+            >
+              {createMutation.isPending ? "Creating..." : "Create Task"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

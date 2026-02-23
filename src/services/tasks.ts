@@ -3,8 +3,8 @@ import { type BackendResponse } from './auth';
 
 // ==================== Types ====================
 
-export type TaskPriority = 'high' | 'medium' | 'low';
-export type TaskStatus = 'todo' | 'in-progress' | 'done';
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE' | 'CANCELLED';
 
 export interface Task {
   id: string;
@@ -23,8 +23,7 @@ export interface Task {
 export interface CreateTaskInput {
   title: string;
   description?: string;
-  priority: TaskPriority;
-  status?: TaskStatus;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
   dueDate?: string;
   tags?: string[];
   documentId?: string;

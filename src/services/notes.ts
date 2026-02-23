@@ -16,7 +16,6 @@ export interface Note {
 }
 
 export interface CreateNoteInput {
-  title: string;
   content: string;
   tags?: string[];
   color?: string;

@@ -73,10 +73,31 @@ export function TopBar({ onMobileMenuToggle }: TopBarProps) {
 
       {/* Actions */}
       <div className="flex items-center gap-2">
-        <Button className="hidden sm:flex rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:from-indigo-600 hover:to-violet-700 gap-1.5">
-          <Plus className="h-4 w-4" />
-          New
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="hidden sm:flex rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:from-indigo-600 hover:to-violet-700 gap-1.5">
+              <Plus className="h-4 w-4" />
+              New
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="rounded-xl w-40">
+            <DropdownMenuItem asChild>
+              <Link to="/documents?create=true" className="flex items-center">
+                Document
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/notes?create=true" className="flex items-center">
+                Note
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/tasks?create=true" className="flex items-center">
+                Task
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
