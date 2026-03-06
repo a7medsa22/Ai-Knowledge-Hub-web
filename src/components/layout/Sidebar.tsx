@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { File, BookOpen, CheckCircle, Bot, Settings, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { File, BookOpen, CheckCircle, Bot, Settings, ChevronLeft, ChevronRight, X, Folder, Cpu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -9,7 +9,9 @@ const navItems = [
   { title: "Documents", url: "/documents", icon: File },
   { title: "Notes", url: "/notes", icon: BookOpen },
   { title: "Tasks", url: "/tasks", icon: CheckCircle },
+  { title: "Files", url: "/files", icon: Folder },
   { title: "AI Tools", url: "/ai", icon: Bot },
+  { title: "MCP Tools", url: "/mcp", icon: Cpu },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 

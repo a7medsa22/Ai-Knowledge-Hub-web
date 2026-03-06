@@ -53,7 +53,7 @@ export interface DocumentStats {
 export const documentsService = {
   // Create document (text)
   create: async (data: CreateDocumentInput) => {
-    const response = await api.post<BackendResponse<Document>>('/v1/docs', data);
+    const response = await api.post<BackendResponse<Document>>('/docs', data);
     return response.data.data;
   },
 
@@ -65,7 +65,7 @@ export const documentsService = {
     if (data.tags) formData.append('tags', data.tags.join(','));
     if (data.isPublic !== undefined) formData.append('isPublic', String(data.isPublic));
 
-    const response = await api.post<BackendResponse<Document>>('/v1/docs', formData, {
+    const response = await api.post<BackendResponse<Document>>('/docs', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -75,43 +75,43 @@ export const documentsService = {
 
   // Get all public documents (searchable)
   getAll: async (params?: { search?: string; tags?: string[]; page?: number; limit?: number }) => {
-    const response = await api.get<BackendResponse<Document[]>>('/v1/docs', { params });
+    const response = await api.get<BackendResponse<Document[]>>('/docs', { params });
     return response.data.data;
   },
 
   // Get user's documents
   getMyDocuments: async () => {
-    const response = await api.get<BackendResponse<Document[]>>('/v1/docs/my-docs');
+    const response = await api.get<BackendResponse<Document[]>>('/docs/my-docs');
     return response.data.data;
   },
 
   // Get all tags
   getTags: async () => {
-    const response = await api.get<BackendResponse<string[]>>('/v1/docs/tags');
+    const response = await api.get<BackendResponse<string[]>>('/docs/tags');
     return response.data.data;
   },
 
   // Get statistics
   getStats: async () => {
-    const response = await api.get<BackendResponse<DocumentStats>>('/v1/docs/status');
+    const response = await api.get<BackendResponse<DocumentStats>>('/docs/status');
     return response.data.data;
   },
 
   // Get specific document
   getById: async (id: string) => {
-    const response = await api.get<BackendResponse<Document>>(`/v1/docs/${id}`);
+    const response = await api.get<BackendResponse<Document>>(`/docs/${id}`);
     return response.data.data;
   },
 
   // Update document
   update: async (id: string, data: UpdateDocumentInput) => {
-    const response = await api.patch<BackendResponse<Document>>(`/v1/docs/${id}`, data);
+    const response = await api.patch<BackendResponse<Document>>(`/docs/${id}`, data);
     return response.data.data;
   },
 
   // Delete document
   delete: async (id: string) => {
-    const response = await api.delete<BackendResponse<any>>(`/v1/docs/${id}`);
+    const response = await api.delete<BackendResponse<any>>(`/docs/${id}`);
     return response.data.data;
   },
 };

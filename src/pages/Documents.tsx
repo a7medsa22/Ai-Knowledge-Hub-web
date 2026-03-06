@@ -10,11 +10,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { documentsService } from "@/services/documents";
+import { aiService } from "@/services/ai";
 import { DocumentCard } from "@/components/documents/DocumentCard";
+import { useNavigate } from "react-router-dom";
 
 const Documents = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (searchParams.get("create") === "true") {
@@ -29,6 +32,9 @@ const Documents = () => {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isBulkLoading, setIsBulkLoading] = useState(false);
+  const [bulkSummary, setBulkSummary] = useState<{ docId: string; title: string; summary: string }[] | null>(null);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -93,6 +99,28 @@ const Documents = () => {
     setContent("");
     setFile(null);
     setTagsInput("");
+  };
+
+  const handleToggleSelection = (id: string) => {
+    setSelectedIds(current => 
+      current.includes(id) 
+        ? current.filter(i => i !== id) 
+        : [...current, id]
+    );
+  };
+
+  const handleBulkSummarize = async () => {
+    if (selectedIds.length === 0) return;
+    setIsBulkLoading(true);
+    try {
+      const response = await aiService.bulkSummarize({ docIds: selectedIds, length: "short" });
+      setBulkSummary(response.summaries);
+      toast({ title: "Bulk Summary Complete", description: `Generated summaries for ${response.summaries.length} documents.` });
+    } catch {
+      toast({ title: "Error", description: "Failed to generate bulk summaries.", variant: "destructive" });
+    } finally {
+      setIsBulkLoading(false);
+    }
   };
 
   return (
@@ -198,6 +226,56 @@ const Documents = () => {
         </Dialog>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedIds.length > 0 && (
+        <div className="sticky top-0 z-20 -mx-6 px-6 py-3 bg-primary/5 backdrop-blur-md border-b border-primary/20 flex items-center justify-between animate-in slide-in-from-top duration-300">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium">{selectedIds.length} documents selected</span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setSelectedIds([])}
+              className="text-xs h-8 rounded-lg"
+            >
+              Clear
+            </Button>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              className="rounded-xl gap-2 bg-gradient-to-r from-indigo-500 to-violet-600 text-white"
+              onClick={handleBulkSummarize}
+              disabled={isBulkLoading}
+            >
+              <Brain className="h-4 w-4" />
+              {isBulkLoading ? "Summarizing..." : "Bulk Summarize"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Summary Results */}
+      {bulkSummary && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">Bulk AI Summaries</h2>
+              <Button variant="ghost" size="icon" onClick={() => setBulkSummary(null)}>
+                <Plus className="h-4 w-4 rotate-45" />
+              </Button>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {bulkSummary.map((s) => (
+                <div key={s.docId} className="bg-background rounded-xl p-4 border border-border">
+                  <h3 className="font-semibold text-sm mb-2">{s.title}</h3>
+                  <p className="text-sm text-muted-foreground">{s.summary}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <Input
           placeholder="Search documents..."
@@ -238,14 +316,17 @@ const Documents = () => {
 
         {!isLoading &&
           documents?.map((doc) => (
-            <DocumentCard
-              key={doc.id}
-              title={doc.title}
-              excerpt={doc.content?.slice(0, 160) || ""}
-              size={doc.stats ? `${doc.stats.downloads} downloads` : ""}
-              date={new Date(doc.createdAt).toLocaleDateString()}
-              tags={doc.tags}
-            />
+            <div key={doc.id} onClick={() => navigate(`/documents/${doc.id}`)} className="cursor-pointer">
+              <DocumentCard
+                title={doc.title}
+                excerpt={doc.content?.slice(0, 160) || ""}
+                size={doc.stats ? `${doc.stats.downloads} downloads` : ""}
+                date={new Date(doc.createdAt).toLocaleDateString()}
+                tags={doc.tags}
+                isSelected={selectedIds.includes(doc.id)}
+                onSelect={() => handleToggleSelection(doc.id)}
+              />
+            </div>
           ))}
       </div>
     </div>

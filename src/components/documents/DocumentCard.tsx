@@ -16,9 +16,11 @@ interface DocumentCardProps {
   date: string;
   tags: string[];
   loading?: boolean;
+  isSelected?: boolean;
+  onSelect?: (e: React.MouseEvent) => void;
 }
 
-export function DocumentCard({ title, excerpt, size, date, tags, loading }: DocumentCardProps) {
+export function DocumentCard({ title, excerpt, size, date, tags, loading, isSelected, onSelect }: DocumentCardProps) {
   if (loading) {
     return (
       <div className="rounded-2xl border border-border bg-card/80 backdrop-blur-sm p-5">
@@ -31,8 +33,31 @@ export function DocumentCard({ title, excerpt, size, date, tags, loading }: Docu
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card/80 backdrop-blur-sm p-5 hover:scale-[1.02] hover:shadow-lg transition-all duration-200 cursor-pointer">
-      <h3 className="font-semibold mb-1 truncate">{title}</h3>
+    <div 
+      className={cn(
+        "relative rounded-2xl border bg-card/80 backdrop-blur-sm p-5 hover:scale-[1.01] hover:shadow-lg transition-all duration-200 cursor-pointer group",
+        isSelected ? "border-primary ring-1 ring-primary" : "border-border"
+      )}
+    >
+      {onSelect && (
+        <div 
+          className={cn(
+            "absolute top-4 right-4 z-10 h-5 w-5 rounded border border-primary flex items-center justify-center transition-colors",
+            isSelected ? "bg-primary" : "bg-background opacity-0 group-hover:opacity-100"
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect(e);
+          }}
+        >
+          {isSelected && (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 text-white">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          )}
+        </div>
+      )}
+      <h3 className="font-semibold mb-1 truncate pr-8">{title}</h3>
       <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{excerpt}</p>
       <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground">
         <span>{size}</span>

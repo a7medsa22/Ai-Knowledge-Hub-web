@@ -25,6 +25,15 @@ const Tasks = () => {
   const todayDate = new Date().toISOString().split('T')[0];
   const [dueDate, setDueDate] = useState(todayDate);
 
+  // Edit/Delete state
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editPriority, setEditPriority] = useState<TaskPriority>("MEDIUM");
+  const [editDueDate, setEditDueDate] = useState("");
+
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
 
@@ -53,6 +62,36 @@ const Tasks = () => {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || "Failed to create task");
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data: { id: string; title: string; description?: string; priority: TaskPriority; dueDate?: string }) =>
+      tasksService.update(data.id, { 
+        title: data.title, 
+        description: data.description, 
+        priority: data.priority, 
+        dueDate: data.dueDate 
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      setIsEditOpen(false);
+      toast.success("Task updated successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to update task");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => tasksService.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      setIsDeleteOpen(false);
+      toast.success("Task deleted successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to delete task");
     },
   });
 
@@ -92,6 +131,34 @@ const Tasks = () => {
     toggleMutation.mutate(task);
   };
 
+  const handleEditOpen = (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (task) {
+      setSelectedTaskId(id);
+      setEditTitle(task.title);
+      setEditDescription(task.description || "");
+      setEditPriority(task.priority);
+      setEditDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : "");
+      setIsEditOpen(true);
+    }
+  };
+
+  const handleUpdateTask = () => {
+    if (!selectedTaskId || !editTitle.trim()) return;
+    updateMutation.mutate({
+      id: selectedTaskId,
+      title: editTitle,
+      description: editDescription,
+      priority: editPriority,
+      dueDate: editDueDate || undefined,
+    });
+  };
+
+  const handleDeleteOpen = (id: string) => {
+    setSelectedTaskId(id);
+    setIsDeleteOpen(true);
+  };
+
   const mappedTasks: TaskItemFullProps[] = tasks.map((task) => ({
     id: task.id,
     title: task.title,
@@ -109,10 +176,14 @@ const Tasks = () => {
     // For other filters, only show non-completed tasks
     if (t.completed) return false;
     
-    const taskDate = t.dueDate !== "No date" ? new Date(t.dueDate).toDateString() : null;
+    const taskDateStr = t.dueDate !== "No date" ? t.dueDate : null;
+    const taskDateObj = taskDateStr ? new Date(taskDateStr) : null;
+    const taskDate = taskDateObj?.toDateString();
+    const isOverdue = taskDateObj && taskDateObj < new Date(today);
     
+    if (filter === "overdue") return isOverdue;
     if (filter === "today") return taskDate === today;
-    if (filter === "upcoming") return taskDate !== null && taskDate !== today;
+    if (filter === "upcoming") return taskDate !== null && taskDate !== today && !isOverdue;
     return true;
   });
 
@@ -140,6 +211,7 @@ const Tasks = () => {
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="today">Today</SelectItem>
               <SelectItem value="upcoming">Upcoming</SelectItem>
+              <SelectItem value="overdue">Overdue</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
             </SelectContent>
           </Select>
@@ -178,9 +250,9 @@ const Tasks = () => {
       ) : (
         <Card>
           <CardContent className="p-4 space-y-4">
-            <TaskList title="Today" tasks={todayTasks} onToggle={handleToggle} />
-            <TaskList title="Upcoming" tasks={upcomingTasks} onToggle={handleToggle} />
-            <TaskList title="Completed" tasks={completedTasks} onToggle={handleToggle} defaultOpen={false} />
+            <TaskList title="Today" tasks={todayTasks} onToggle={handleToggle} onEdit={handleEditOpen} onDelete={handleDeleteOpen} />
+            <TaskList title="Upcoming" tasks={upcomingTasks} onToggle={handleToggle} onEdit={handleEditOpen} onDelete={handleDeleteOpen} />
+            <TaskList title="Completed" tasks={completedTasks} onToggle={handleToggle} onEdit={handleEditOpen} onDelete={handleDeleteOpen} defaultOpen={false} />
           </CardContent>
         </Card>
       )}
@@ -248,6 +320,98 @@ const Tasks = () => {
               className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:opacity-90"
             >
               {createMutation.isPending ? "Creating..." : "Create Task"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="sm:max-w-[500px] rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Edit Task</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-title" className="text-sm font-medium">Title</Label>
+              <Input
+                id="edit-title"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="rounded-xl bg-muted/50 border-border"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-description" className="text-sm font-medium">Description</Label>
+              <Textarea
+                id="edit-description"
+                className="min-h-[100px] rounded-xl bg-muted/50 border-border resize-none"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-priority" className="text-sm font-medium">Priority</Label>
+                <Select value={editPriority} onValueChange={(v: TaskPriority) => setEditPriority(v)}>
+                  <SelectTrigger id="edit-priority" className="rounded-xl bg-muted/50 border-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="LOW">Low</SelectItem>
+                    <SelectItem value="MEDIUM">Medium</SelectItem>
+                    <SelectItem value="HIGH">High</SelectItem>
+                    <SelectItem value="URGENT">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-dueDate" className="text-sm font-medium">Due Date</Label>
+                <Input
+                  id="edit-dueDate"
+                  type="date"
+                  value={editDueDate}
+                  onChange={(e) => setEditDueDate(e.target.value)}
+                  className="rounded-xl bg-muted/50 border-border"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsEditOpen(false)} className="rounded-xl">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleUpdateTask} 
+              disabled={updateMutation.isPending}
+              className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:opacity-90"
+            >
+              {updateMutation.isPending ? "Updating..." : "Update Task"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <DialogContent className="sm:max-w-[425px] rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Delete Task</DialogTitle>
+            <div className="text-sm text-muted-foreground pt-2">
+              Are you sure you want to delete this task? This action cannot be undone.
+            </div>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button variant="ghost" onClick={() => setIsDeleteOpen(false)} className="rounded-xl">
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => selectedTaskId && deleteMutation.mutate(selectedTaskId)}
+              disabled={deleteMutation.isPending}
+              className="rounded-xl"
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete Permanently"}
             </Button>
           </DialogFooter>
         </DialogContent>

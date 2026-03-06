@@ -33,25 +33,25 @@ export interface User {
 export const usersService = {
   // Get current user profile
   getProfile: async () => {
-    const response = await api.get<BackendResponse<UserProfile>>('/v1/users/profile');
+    const response = await api.get<BackendResponse<UserProfile>>('/users/profile');
     return response.data.data;
   },
 
   // Update profile
   updateProfile: async (data: UpdateProfileInput) => {
-    const response = await api.put<BackendResponse<UserProfile>>('/v1/users/profile', data);
+    const response = await api.put<BackendResponse<UserProfile>>('/users/profile', data);
     return response.data.data;
   },
 
   // Delete account
   deleteAccount: async () => {
-    const response = await api.delete<BackendResponse<any>>('/v1/users/profile');
+    const response = await api.delete<BackendResponse<any>>('/users/profile');
     return response.data.data;
   },
 
   // Get all users (admin only)
   getAllUsers: async () => {
-    const response = await api.get<BackendResponse<User[]>>('/v1/users');
+    const response = await api.get<BackendResponse<User[]>>('/users');
     return response.data.data;
   },
 };

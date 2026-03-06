@@ -75,58 +75,58 @@ export interface SessionsData {
 export const authService = {
   register: async (data: RegisterInput) => {
     const payload: RegisterInput = { ...data, role: data.role ?? 'USER' };
-    const response = await api.post<BackendResponse<RegisterData>>('/v1/users/auth/register', payload);
+    const response = await api.post<BackendResponse<RegisterData>>('/users/auth/register', payload);
     return response.data.data;
   },
 
   login: async (data: LoginInput) => {
-    const response = await api.post<BackendResponse<LoginData>>('/v1/users/auth/login', data);
+    const response = await api.post<BackendResponse<LoginData>>('/users/auth/login', data);
     return response.data.data;
   },
 
   verifyEmail: async (data: VerifyEmailInput) => {
-    const response = await api.post<BackendResponse<undefined>>('/v1/users/auth/verify-email', data);
+    const response = await api.post<BackendResponse<undefined>>('/users/auth/verify-email', data);
     return response.data.data;
   },
 
   refresh: async (refreshToken: string) => {
-    const response = await api.post<BackendResponse<LoginData>>('/v1/users/auth/refresh', { refreshToken });
+    const response = await api.post<BackendResponse<LoginData>>('/users/auth/refresh', { refreshToken });
     return response.data.data;
   },
 
   forgotPassword: async (data: ForgotPasswordInput) => {
-    const response = await api.post<BackendResponse<undefined>>('/v1/users/auth/forgot-password', data);
+    const response = await api.post<BackendResponse<undefined>>('/users/auth/forgot-password', data);
     return response.data.data;
   },
 
   resetPassword: async (data: ResetPasswordInput) => {
-    const response = await api.post<BackendResponse<undefined>>('/v1/users/auth/reset-password', data);
+    const response = await api.post<BackendResponse<undefined>>('/users/auth/reset-password', data);
     return response.data.data;
   },
 
   resendOtp: async (data: ResendOtpInput) => {
-    const response = await api.post<BackendResponse<ResendOtpData>>('/v1/users/auth/resend-otp', data);
+    const response = await api.post<BackendResponse<ResendOtpData>>('/users/auth/resend-otp', data);
     return response.data.data;
   },
 
   getSessions: async () => {
-    const response = await api.get<BackendResponse<SessionsData>>('/v1/users/auth/sessions');
+    const response = await api.get<BackendResponse<SessionsData>>('/users/auth/sessions');
     return response.data.data;
   },
 
   revokeAllSessions: async () => {
-    const response = await api.delete<BackendResponse<undefined>>('/v1/users/auth/sessions');
+    const response = await api.delete<BackendResponse<undefined>>('/users/auth/sessions');
     return response.data.data;
   },
 
   revokeSession: async (tokenId: string) => {
-    const response = await api.delete<BackendResponse<undefined>>(`/v1/users/auth/sessions/${tokenId}`);
+    const response = await api.delete<BackendResponse<undefined>>(`/users/auth/sessions/${tokenId}`);
     return response.data.data;
   },
 
   logout: async () => {
     try {
-      await api.post<BackendResponse<undefined>>('/v1/users/auth/logout');
+      await api.post<BackendResponse<undefined>>('/users/auth/logout');
     } finally {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');

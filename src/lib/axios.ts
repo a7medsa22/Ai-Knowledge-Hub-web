@@ -4,7 +4,7 @@ class RefreshTokenResponse {
   data?: { accessToken: string; refreshToken: string };
 }
 const api: AxiosInstance = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -41,7 +41,7 @@ api.interceptors.response.use(
         try {
           // Use axios.post to avoid hitting the interceptor with the refresh request
           const refreshResponse = await axios.post(
-            `/api/v1/users/auth/refresh`,
+            `${api.defaults.baseURL}/users/auth/refresh`,
             { refreshToken },
             { headers: { 'Content-Type': 'application/json' } }
           );

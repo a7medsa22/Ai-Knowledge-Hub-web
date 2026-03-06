@@ -7,10 +7,12 @@ interface TaskListProps {
   title: string;
   tasks: TaskItemFullProps[];
   onToggle: (id: string) => void;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
   defaultOpen?: boolean;
 }
 
-export function TaskList({ title, tasks, onToggle, defaultOpen = true }: TaskListProps) {
+export function TaskList({ title, tasks, onToggle, onEdit, onDelete, defaultOpen = true }: TaskListProps) {
   const [open, setOpen] = useState(defaultOpen);
 
   if (tasks.length === 0) return null;
@@ -24,7 +26,7 @@ export function TaskList({ title, tasks, onToggle, defaultOpen = true }: TaskLis
       </CollapsibleTrigger>
       <CollapsibleContent className="space-y-0.5 mt-1">
         {tasks.map((task) => (
-          <TaskItemFull key={task.id} {...task} onToggle={onToggle} />
+          <TaskItemFull key={task.id} {...task} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} />
         ))}
       </CollapsibleContent>
     </Collapsible>

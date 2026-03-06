@@ -13,6 +13,8 @@ import DocumentDetail from "./pages/DocumentDetail";
 import AiTools from "./pages/AiTools";
 import Notes from "./pages/Notes";
 import Tasks from "./pages/Tasks";
+import Files from "./pages/Files";
+import McpTools from "./pages/McpTools";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -47,7 +49,9 @@ const App = () => (
                   <Route path="/documents/:id" element={<DocumentDetail />} />
                   <Route path="/notes" element={<Notes />} />
                   <Route path="/tasks" element={<Tasks />} />
+                  <Route path="/files" element={<Files />} />
                   <Route path="/ai" element={<AiTools />} />
+                  <Route path="/mcp" element={<McpTools />} />
                   <Route path="/settings" element={<Settings />} />
                 </Route>
               </Route>
