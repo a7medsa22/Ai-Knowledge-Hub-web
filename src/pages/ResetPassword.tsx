@@ -30,10 +30,23 @@ const ResetPasswordPage = () => {
         description: "You can now sign in with your new password.",
       });
       navigate("/login");
-    } catch {
+    } catch (error: any) {
+      console.error("Reset password error:", error);
+      let errorMessage = "Invalid code or email. Please try again.";
+      
+      if (error.response?.data?.message) {
+        errorMessage = Array.isArray(error.response.data.message) 
+          ? error.response.data.message.join(", ") 
+          : error.response.data.message;
+      } else if (typeof error.response?.data === 'string') {
+        errorMessage = error.response.data;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Reset failed",
-        description: "Invalid code or email. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

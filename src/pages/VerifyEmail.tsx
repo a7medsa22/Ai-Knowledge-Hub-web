@@ -29,10 +29,23 @@ const VerifyEmailPage = () => {
         description: "You can now sign in to your account.",
       });
       navigate("/login");
-    } catch {
+    } catch (error: any) {
+      console.error("Verification error:", error);
+      let errorMessage = "Invalid or expired code. Please try again.";
+      
+      if (error.response?.data?.message) {
+        errorMessage = Array.isArray(error.response.data.message) 
+          ? error.response.data.message.join(", ") 
+          : error.response.data.message;
+      } else if (typeof error.response?.data === 'string') {
+        errorMessage = error.response.data;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Verification failed",
-        description: "Invalid or expired code. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -49,10 +62,23 @@ const VerifyEmailPage = () => {
         title: "Code resent",
         description: "If this email exists, a new code has been sent.",
       });
-    } catch {
+    } catch (error: any) {
+      console.error("Resend error:", error);
+      let errorMessage = "Unable to resend code. Please try again.";
+      
+      if (error.response?.data?.message) {
+        errorMessage = Array.isArray(error.response.data.message) 
+          ? error.response.data.message.join(", ") 
+          : error.response.data.message;
+      } else if (typeof error.response?.data === 'string') {
+        errorMessage = error.response.data;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Resend failed",
-        description: "Unable to resend code. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

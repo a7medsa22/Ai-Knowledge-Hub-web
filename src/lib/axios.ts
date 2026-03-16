@@ -4,7 +4,9 @@ class RefreshTokenResponse {
   data?: { accessToken: string; refreshToken: string };
 }
 const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
+  // Use relative path '/api/v1' by default to leverage Vite proxy in development (avoids CORS)
+  // and match the backend's current prefix configuration ('api/v1')
+  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },

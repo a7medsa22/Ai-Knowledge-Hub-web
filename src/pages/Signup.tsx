@@ -29,10 +29,21 @@ const SignupPage = () => {
         description: "Check your email for the verification code before signing in.",
       });
       navigate("/verify-email", { state: { email } });
-    } catch (err: unknown) {
-      const description =
-        err instanceof Error && err.message ? err.message : "Something went wrong.";
-      toast({ title: "Signup failed", description, variant: "destructive" });
+    } catch (err: any) {
+      console.error("Signup error:", err);
+      let errorMessage = "Something went wrong.";
+      
+      if (err.response?.data?.message) {
+        errorMessage = Array.isArray(err.response.data.message) 
+          ? err.response.data.message.join(", ") 
+          : err.response.data.message;
+      } else if (typeof err.response?.data === 'string') {
+        errorMessage = err.response.data;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      toast({ title: "Signup failed", description: errorMessage, variant: "destructive" });
     }
   };
 

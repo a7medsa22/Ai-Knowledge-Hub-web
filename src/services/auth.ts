@@ -16,6 +16,7 @@ export interface BackendResponse<T> {
 }
 
 export interface RegisterData {
+  message: string;
   userId: string;
 }
 
