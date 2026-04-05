@@ -6,12 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
 const navItems = [
-  { title: "Documents", url: "/documents", icon: File },
+  { title: "Library", url: "/documents", icon: File },
   { title: "Notes", url: "/notes", icon: BookOpen },
   { title: "Tasks", url: "/tasks", icon: CheckCircle },
-  { title: "Files", url: "/files", icon: Folder },
   { title: "AI Tools", url: "/ai", icon: Bot },
-  { title: "MCP Tools", url: "/mcp", icon: Cpu },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
@@ -62,7 +60,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
         <div className="flex items-center justify-between p-4 border-b border-border">
           {!collapsed && (
             <span className="text-lg font-bold bg-gradient-to-r from-indigo-500 to-violet-600 bg-clip-text text-transparent truncate">
-              AI Hub
+              KNOWLEDGE BASE
             </span>
           )}
           <Button variant="ghost" size="icon" onClick={onToggle} className="shrink-0 rounded-xl">
@@ -78,7 +76,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
           <SheetTitle className="sr-only">Navigation</SheetTitle>
           <div className="flex items-center justify-between p-4 border-b border-border">
             <span className="text-lg font-bold bg-gradient-to-r from-indigo-500 to-violet-600 bg-clip-text text-transparent">
-              AI Hub
+              KNOWLEDGE BASE
             </span>
           </div>
           <SidebarContent collapsed={false} />

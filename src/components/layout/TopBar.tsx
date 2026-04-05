@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Search, Plus, Menu, User, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -10,10 +11,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useLocation, Link } from "react-router-dom";
+import { GlobalSearch } from "./GlobalSearch";
 
 const routeNames: Record<string, string> = {
   "/": "Dashboard",
-  "/documents": "Documents",
+  "/documents": "Library",
   "/notes": "Notes",
   "/tasks": "Tasks",
   "/ai": "AI Tools",
@@ -25,6 +27,7 @@ interface TopBarProps {
 }
 
 export function TopBar({ onMobileMenuToggle }: TopBarProps) {
+  const [searchOpen, setSearchOpen] = useState(false);
   const location = useLocation();
   const { user, logout } = useAuth();
   const pathSegments = location.pathname.split("/").filter(Boolean);
@@ -62,14 +65,19 @@ export function TopBar({ onMobileMenuToggle }: TopBarProps) {
 
       {/* Search */}
       <div className="flex-1 flex justify-center">
-        <div className="relative w-full max-w-sm lg:max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search..."
-            className="pl-9 rounded-xl bg-muted/50 border-border"
-          />
-        </div>
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="relative w-full max-w-sm lg:max-w-md flex items-center gap-2 rounded-xl bg-muted/50 border border-border px-3 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors outline-none focus:ring-2 focus:ring-primary"
+        >
+          <Search className="h-4 w-4 shrink-0" />
+          <span className="flex-1 text-left">Search anything...</span>
+          <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+            <span className="text-xs">⌘</span>K
+          </kbd>
+        </button>
       </div>
+
+      <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
 
       {/* Actions */}
       <div className="flex items-center gap-2">

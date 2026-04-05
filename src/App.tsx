@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -13,8 +13,6 @@ import DocumentDetail from "./pages/DocumentDetail";
 import AiTools from "./pages/AiTools";
 import Notes from "./pages/Notes";
 import Tasks from "./pages/Tasks";
-import Files from "./pages/Files";
-import McpTools from "./pages/McpTools";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -49,9 +47,9 @@ const App = () => (
                   <Route path="/documents/:id" element={<DocumentDetail />} />
                   <Route path="/notes" element={<Notes />} />
                   <Route path="/tasks" element={<Tasks />} />
-                  <Route path="/files" element={<Files />} />
+                  <Route path="/files" element={<Navigate to="/documents" replace />} />
+                  <Route path="/mcp" element={<Navigate to="/" replace />} />
                   <Route path="/ai" element={<AiTools />} />
-                  <Route path="/mcp" element={<McpTools />} />
                   <Route path="/settings" element={<Settings />} />
                 </Route>
               </Route>

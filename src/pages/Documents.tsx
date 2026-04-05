@@ -50,6 +50,14 @@ const Documents = () => {
   const [content, setContent] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [tagsInput, setTagsInput] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
+  
+  // Pagination & Sorting state
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [viewMode, setViewMode] = useState<"all" | "my">("all");
 
   const { data: stats } = useQuery({
     queryKey: ["documents", "stats"],
@@ -62,21 +70,31 @@ const Documents = () => {
   });
 
   const { data: documents, isLoading, error } = useQuery({
-    queryKey: ["documents", { search: debouncedSearch, selectedTag }],
-    queryFn: () =>
-      documentsService.getAll({
+    queryKey: ["documents", { search: debouncedSearch, selectedTag, page, limit, sortBy, sortOrder, viewMode }],
+    queryFn: () => {
+      if (viewMode === "my") {
+        return documentsService.getMyDocuments();
+      }
+      return documentsService.getAll({
         search: debouncedSearch || undefined,
         tags: selectedTag ? [selectedTag] : undefined,
-      }),
+        page,
+        limit,
+        // @ts-ignore
+        sortBy: sortBy,
+        // @ts-ignore
+        sortOrder: sortOrder,
+      });
+    }
   });
 
   const { mutate: createDoc, isPending: isCreating } = useMutation({
     mutationFn: async () => {
       const tagList = tagsInput.split(",").map(t => t.trim()).filter(Boolean);
       if (createMode === "file" && file) {
-        return documentsService.createFromFile({ title, file, tags: tagList });
+        return documentsService.createFromFile({ title, file, tags: tagList, isPublic });
       } else {
-        return documentsService.create({ title, content, tags: tagList });
+        return documentsService.create({ title, content, tags: tagList, isPublic });
       }
     },
     onSuccess: () => {
@@ -99,6 +117,7 @@ const Documents = () => {
     setContent("");
     setFile(null);
     setTagsInput("");
+    setIsPublic(true);
   };
 
   const handleToggleSelection = (id: string) => {
@@ -127,9 +146,9 @@ const Documents = () => {
     <div className="mx-auto max-w-6xl space-y-6 animate-fade-in">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Documents</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Library</h1>
           <p className="text-muted-foreground mt-1">
-            Browse and manage your knowledge base
+            Browse and manage your library
           </p>
         </div>
         
@@ -211,6 +230,24 @@ const Documents = () => {
                   className="rounded-xl"
                 />
               </div>
+
+              <div className="flex items-center justify-between py-2 px-1 border border-border/50 rounded-xl">
+                <div className="space-y-0.5 px-2">
+                  <Label className="text-sm font-medium">Public Access</Label>
+                  <p className="text-[10px] text-muted-foreground">
+                    Allow others to search and view
+                  </p>
+                </div>
+                <div 
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 ${isPublic ? 'bg-indigo-600' : 'bg-gray-200'}`}
+                  onClick={() => setIsPublic(!isPublic)}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isPublic ? 'translate-x-5' : 'translate-x-0'}`}
+                  />
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="rounded-xl">Cancel</Button>
@@ -277,13 +314,45 @@ const Documents = () => {
       )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex p-1 bg-muted rounded-xl gap-1 sm:w-fit">
+          <Button 
+            variant={viewMode === "all" ? "secondary" : "ghost"} 
+            className="rounded-lg h-8 text-xs px-4"
+            onClick={() => setViewMode("all")}
+          >
+            All Public
+          </Button>
+          <Button 
+            variant={viewMode === "my" ? "secondary" : "ghost"} 
+            className="rounded-lg h-8 text-xs px-4"
+            onClick={() => setViewMode("my")}
+          >
+            My Documents
+          </Button>
+        </div>
+
         <Input
           placeholder="Search documents..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="rounded-xl sm:max-w-xs"
         />
-        <div className="flex flex-wrap gap-2">
+        
+        <select 
+          className="bg-muted rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+          value={`${sortBy}:${sortOrder}`}
+          onChange={(e) => {
+            const [s, o] = e.target.value.split(":");
+            setSortBy(s);
+            setSortOrder(o as "asc" | "desc");
+          }}
+        >
+          <option value="createdAt:desc">Newest First</option>
+          <option value="createdAt:asc">Oldest First</option>
+          <option value="title:asc">A-Z</option>
+        </select>
+
+        <div className="flex flex-wrap gap-2 sm:ml-auto">
           {(tags ?? []).map((tag) => (
             <Button
               key={tag}
@@ -328,6 +397,32 @@ const Documents = () => {
               />
             </div>
           ))}
+      </div>
+
+      <div className="flex items-center justify-between py-4">
+        <p className="text-sm text-muted-foreground">
+          Showing {documents?.length || 0} documents
+        </p>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="rounded-xl"
+            disabled={page === 1}
+            onClick={() => setPage(p => p - 1)}
+          >
+            Previous
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="rounded-xl"
+            disabled={(documents?.length || 0) < limit}
+            onClick={() => setPage(p => p + 1)}
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   );
