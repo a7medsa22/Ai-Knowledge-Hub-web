@@ -8,7 +8,7 @@ import { documentsService } from "@/services/documents";
 import { aiService } from "@/services/ai";
 import { notesService } from "@/services/notes";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Edit2, Trash2, MoreVertical, X } from "lucide-react";
+import { Edit2, Trash2, MoreVertical, X, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -46,6 +46,10 @@ const DocumentDetail = () => {
   // Delete state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
+  // Add note state
+  const [isAddNoteDialogOpen, setIsAddNoteDialogOpen] = useState(false);
+  const [newNoteContent, setNewNoteContent] = useState("");
+
   const { data: document } = useQuery({
     queryKey: ["document", id],
     queryFn: () => documentsService.getById(id ?? ""),
@@ -79,6 +83,19 @@ const DocumentDetail = () => {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to delete document", variant: "destructive" });
+    },
+  });
+
+  const createNoteMutation = useMutation({
+    mutationFn: (content: string) => notesService.create({ content, documentId: id }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["document-notes", id] });
+      setIsAddNoteDialogOpen(false);
+      setNewNoteContent("");
+      toast({ title: "Success", description: "Note added successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to add note", variant: "destructive" });
     },
   });
 
@@ -210,24 +227,38 @@ const DocumentDetail = () => {
         />
       )}
 
-      {/* Related Notes */}
-      {relatedNotes && relatedNotes.length > 0 && (
+      {relatedNotes && (
         <section className="pt-8 border-t border-border">
-          <h2 className="text-xl font-bold mb-4">Related Notes</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {relatedNotes.map((note) => (
-              <NoteCard
-                key={note.id}
-                id={note.id}
-                title={note.title || (note.content.split('\n')[0].slice(0, 40) || "Untitled Note")}
-                excerpt={note.content}
-                tag={note.tags?.[0] ?? "Note"}
-                timestamp={new Date(note.createdAt).toLocaleDateString()}
-              />
-            ))}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">Related Notes</h2>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-xl"
+              onClick={() => setIsAddNoteDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" /> Add Note
+            </Button>
           </div>
+          {relatedNotes.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {relatedNotes.map((note) => (
+                <NoteCard
+                  key={note.id}
+                  id={note.id}
+                  title={note.title || (note.content.split('\n')[0].slice(0, 40) || "Untitled Note")}
+                  excerpt={note.content}
+                  tag={note.tags?.[0] ?? "Note"}
+                  timestamp={new Date(note.createdAt).toLocaleDateString()}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">No notes matching this document.</div>
+          )}
         </section>
       )}
+
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -291,6 +322,40 @@ const DocumentDetail = () => {
               className="rounded-xl"
             >
               {deleteMutation.isPending ? "Deleting..." : "Delete Permanently"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Note Dialog */}
+      <Dialog open={isAddNoteDialogOpen} onOpenChange={setIsAddNoteDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Add Note</DialogTitle>
+            <DialogDescription>Create a new note linked to this document.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="note-content">Note Content</Label>
+              <Textarea
+                id="note-content"
+                value={newNoteContent}
+                onChange={(e) => setNewNoteContent(e.target.value)}
+                placeholder="Write your note here..."
+                className="min-h-[150px] rounded-xl resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddNoteDialogOpen(false)} className="rounded-xl">
+              Cancel
+            </Button>
+            <Button
+              onClick={() => createNoteMutation.mutate(newNoteContent)}
+              disabled={!newNoteContent.trim() || createNoteMutation.isPending}
+              className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white"
+            >
+              {createNoteMutation.isPending ? "Adding..." : "Add Note"}
             </Button>
           </DialogFooter>
         </DialogContent>

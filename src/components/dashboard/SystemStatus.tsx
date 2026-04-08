@@ -3,6 +3,7 @@ import { Activity, CheckCircle2, AlertCircle, Cpu } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { aiService } from "@/services/ai";
 import { mcpService } from "@/services/mcp";
+import { documentsService } from "@/services/documents";
 import { cn } from "@/lib/utils";
 
 export function SystemStatus() {
@@ -15,6 +16,19 @@ export function SystemStatus() {
   const { data: mcpHealth, isLoading: mcpLoading } = useQuery({
     queryKey: ["mcp", "health"],
     queryFn: mcpService.healthCheck,
+    refetchInterval: 30000,
+  });
+
+  const { data: backendHealth, isLoading: backendLoading } = useQuery({
+    queryKey: ["backend", "health"],
+    queryFn: async () => {
+      try {
+        await documentsService.getStats();
+        return { healthy: true };
+      } catch {
+        return { healthy: false };
+      }
+    },
     refetchInterval: 30000,
   });
 
@@ -84,6 +98,12 @@ export function SystemStatus() {
           status={mcpHealth?.healthy} 
           loading={mcpLoading} 
           icon={Cpu} 
+        />
+        <StatusItem 
+          label="Core API Services" 
+          status={backendHealth?.healthy} 
+          loading={backendLoading} 
+          icon={Activity} 
         />
         {aiStatus?.version && (
           <div className="flex items-center justify-between px-2 pt-1 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">

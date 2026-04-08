@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { Plus, Search, Tag, FileText, Upload, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -85,7 +85,8 @@ const Documents = () => {
         // @ts-ignore
         sortOrder: sortOrder,
       });
-    }
+    },
+    placeholderData: keepPreviousData
   });
 
   const { mutate: createDoc, isPending: isCreating } = useMutation({
